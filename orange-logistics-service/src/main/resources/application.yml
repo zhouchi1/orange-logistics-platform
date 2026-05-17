@@ -1,0 +1,89 @@
+server:
+  port: 8080
+
+spring:
+  config:
+    import: "optional:nacos:${NACOS_ADDR:localhost:8848}"
+  application:
+    name: orange-logistics-service
+
+  # R2DBC MySQL
+  r2dbc:
+    url: r2dbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:13306}/orange_logistics?serverTimezone=Asia/Shanghai
+    username: root
+    password: orange_logistics_2024
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+
+  # Redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+
+  # Kafka
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:29092}
+    consumer:
+      group-id: logistics-service
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  # Elasticsearch
+  elasticsearch:
+    uris: http://${ES_HOST:localhost}:9200
+    connection-timeout: 5s
+    socket-timeout: 30s
+
+  # Jackson
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
+# ClickHouse
+clickhouse:
+  url: jdbc:clickhouse://${CLICKHOUSE_HOST:localhost}:8123/logistics
+  username: default
+  password: ""
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.orange.logistics: DEBUG
+    org.springframework.data.r2dbc: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# Local dev mode - disable Nacos registration
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+      config:
+        enabled: false

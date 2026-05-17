@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ai-prediction:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - PREDICTION_REDIS_URL=redis://redis:6379/0
+      - PREDICTION_MLFLOW_TRACKING_URI=http://mlflow:5000
+      - PREDICTION_CELERY_BROKER_URL=redis://redis:6379/1
+    volumes:
+      - ./models_store:/app/models_store
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

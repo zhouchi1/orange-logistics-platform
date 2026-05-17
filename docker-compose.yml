@@ -1,0 +1,576 @@
+services:
+  # ==================== Infrastructure ====================
+
+  # Kafka (KRaft mode)
+  kafka:
+    image: apache/kafka:latest
+    container_name: orange-kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      CLUSTER_ID: "5L6g3nShT-eMCtK--X86sw"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - orange-net
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: orange-mysql
+    ports:
+      - "13306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: orange_logistics_2024
+      MYSQL_DATABASE: orange_logistics
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./scripts/init-mysql.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./scripts/init-nacos.sql:/docker-entrypoint-initdb.d/02-init-nacos.sql
+    networks:
+      - orange-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-porange_logistics_2024"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # Redis
+  redis:
+    image: redis:latest
+    container_name: orange-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - orange-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+
+  # Nacos
+  nacos:
+    image: nacos/nacos-server:latest
+    container_name: orange-nacos
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    environment:
+      - MODE=standalone
+      - JVM_XMS=256m
+      - JVM_XMX=256m
+      - JVM_XMN=128m
+      - NACOS_AUTH_ENABLE=false
+      - NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789
+      - NACOS_AUTH_IDENTITY_KEY=serverIdentity
+      - NACOS_AUTH_IDENTITY_VALUE=security
+    volumes:
+      - nacos-data:/home/nacos/data
+    networks:
+      - orange-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/liveness"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+    restart: on-failure
+
+  # RocketMQ NameServer
+  rocketmq-namesrv:
+    image: apache/rocketmq:4.9.7
+    container_name: orange-rocketmq-namesrv
+    ports:
+      - "9876:9876"
+    command: sh mqnamesrv
+    environment:
+      - JAVA_OPT_EXT=-Xms256m -Xmx256m
+    volumes:
+      - rocketmq-namesrv-data:/home/rocketmq/store
+    networks:
+      - orange-net
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep NamesrvStartup || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # RocketMQ Broker
+  rocketmq-broker:
+    image: apache/rocketmq:4.9.7
+    container_name: orange-rocketmq-broker
+    ports:
+      - "10911:10911"
+      - "10909:10909"
+    command: sh mqbroker -n rocketmq-namesrv:9876
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m -XX:MaxDirectMemorySize=256m"
+      NAMESRV_ADDR: "rocketmq-namesrv:9876"
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_healthy
+    networks:
+      - orange-net
+
+  # Spark Master
+  spark-master:
+    image: apache/spark:3.5.1-java17
+    container_name: orange-spark-master
+    ports:
+      - "7077:7077"
+      - "8180:8080"
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host 0.0.0.0 --port 7077 --webui-port 8080
+    networks:
+      - orange-net
+
+  # Spark Worker
+  spark-worker:
+    image: apache/spark:3.5.1-java17
+    container_name: orange-spark-worker
+    ports:
+      - "8181:8081"
+    environment:
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081
+    depends_on:
+      - spark-master
+    networks:
+      - orange-net
+
+  # Seata Server
+  seata:
+    image: seataio/seata-server:2.0.0
+    container_name: orange-seata
+    ports:
+      - "18091:8091"
+      - "7091:7091"
+    environment:
+      - SEATA_PORT=8091
+      - STORE_MODE=db
+      - SEATA_IP=seata
+      - SEATA_ENV=dev
+    networks:
+      - orange-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: orange-elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.name=orange-logistics-es
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    networks:
+      - orange-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: orange-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - orange-net
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: orange-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - orange-net
+
+  # ==================== Java Microservices ====================
+
+  # Gateway
+  logistics-gateway:
+    build: ./orange-logistics-gateway
+    container_name: orange-gateway
+    ports:
+      - "8888:8888"
+    environment: &svc-env
+      - NACOS_ADDR=nacos:8848
+      - NACOS_SERVER_ADDR=nacos:8848
+      - REDIS_HOST=redis
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - KAFKA_SERVERS=kafka:9092
+      - ES_HOST=elasticsearch
+      - SEATA_ADDR=seata:8091
+      - ROCKETMQ_NAMESRV=rocketmq-namesrv:9876
+    depends_on:
+      nacos:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Core Service
+  logistics-service:
+    build: ./orange-logistics-service
+    container_name: orange-service
+    ports:
+      - "8080:8080"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Monitor
+  logistics-monitor:
+    build: ./orange-logistics-monitor
+    container_name: orange-monitor
+    ports:
+      - "8081:8081"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Transport
+  logistics-transport:
+    build: ./orange-logistics-transport
+    container_name: orange-transport
+    ports:
+      - "8083:8083"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Dispatch
+  logistics-dispatch:
+    build: ./orange-logistics-dispatch
+    container_name: orange-dispatch
+    ports:
+      - "8084:8084"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Billing
+  logistics-billing:
+    build: ./orange-logistics-billing
+    container_name: orange-billing
+    ports:
+      - "8085:8085"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Customer
+  logistics-customer:
+    build: ./orange-logistics-customer
+    container_name: orange-customer
+    ports:
+      - "8086:8086"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Notification
+  logistics-notification:
+    build: ./orange-logistics-notification
+    container_name: orange-notification
+    ports:
+      - "8087:8087"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Report
+  logistics-report:
+    build: ./orange-logistics-report
+    container_name: orange-report
+    ports:
+      - "8088:8088"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Risk
+  logistics-risk:
+    build: ./orange-logistics-risk
+    container_name: orange-risk
+    ports:
+      - "8089:8089"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Scheduler
+  logistics-scheduler:
+    build: ./orange-logistics-scheduler
+    container_name: orange-scheduler
+    ports:
+      - "8090:8090"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Search
+  logistics-search:
+    build: ./orange-logistics-search
+    container_name: orange-search
+    ports:
+      - "8091:8091"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Config
+  logistics-config:
+    build: ./orange-logistics-config
+    container_name: orange-config
+    ports:
+      - "8092:8092"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # IM
+  logistics-im:
+    build: ./orange-logistics-im
+    container_name: orange-im
+    ports:
+      - "8093:8093"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Auth
+  logistics-auth:
+    build: ./orange-logistics-auth
+    container_name: orange-auth
+    ports:
+      - "8100:8100"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Order
+  logistics-order:
+    build: ./orange-logistics-order
+    container_name: orange-order
+    ports:
+      - "8101:8101"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Waybill
+  logistics-waybill:
+    build: ./orange-logistics-waybill
+    container_name: orange-waybill
+    ports:
+      - "8102:8102"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+  # Warehouse
+  logistics-warehouse:
+    build: ./orange-logistics-warehouse
+    container_name: orange-warehouse
+    ports:
+      - "8103:8103"
+    environment: *svc-env
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - orange-net
+    restart: on-failure
+
+volumes:
+  kafka-data:
+  mysql-data:
+  redis-data:
+  es-data:
+  nacos-data:
+  prometheus-data:
+  grafana-data:
+  rocketmq-namesrv-data:
+
+networks:
+  orange-net:
+    driver: bridge

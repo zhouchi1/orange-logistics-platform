@@ -1,0 +1,56 @@
+server:
+  port: 8090
+
+spring:
+  config:
+    import: "optional:nacos:${NACOS_ADDR:localhost:8848}"
+  application:
+    name: orange-logistics-scheduler
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+  r2dbc:
+    url: r2dbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:13306}/orange_logistics
+    username: root
+    password: orange_logistics_2024
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+
+# XXL-JOB Configuration
+xxl:
+  job:
+    admin:
+      addresses: http://${XXL_JOB_ADMIN_ADDR:localhost:30800}/xxl-job-admin
+    accessToken: orange-logistics-token-2024
+    executor:
+      appname: orange-logistics-scheduler
+      address:
+      ip:
+      port: 9999
+      logpath: ./logs/xxl-job
+      logretentiondays: 30
+
+# AI Prediction Service
+ai:
+  prediction:
+    url: ${AI_PREDICTION_URL:http://localhost:8001}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+---
+# Local dev mode - disable Nacos registration
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+      config:
+        enabled: false

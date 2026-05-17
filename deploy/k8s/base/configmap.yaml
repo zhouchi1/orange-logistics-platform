@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orange-logistics-config
+  namespace: orange-logistics
+data:
+  NACOS_ADDR: "nacos.orange-logistics.svc.cluster.local:8848"
+  NACOS_SERVER_ADDR: "nacos.orange-logistics.svc.cluster.local:8848"
+  REDIS_HOST: "redis.orange-logistics.svc.cluster.local"
+  MYSQL_HOST: "mysql.orange-logistics.svc.cluster.local"
+  MYSQL_PORT: "3306"
+  KAFKA_SERVERS: "kafka.orange-logistics.svc.cluster.local:9092"
+  ES_HOST: "elasticsearch.orange-logistics.svc.cluster.local"
+  SEATA_ADDR: "seata.orange-logistics.svc.cluster.local:8091"
+  ROCKETMQ_NAMESRV: "rocketmq-namesrv.orange-logistics.svc.cluster.local:9876"
+  SPARK_MASTER: "spark://spark-master.orange-logistics.svc.cluster.local:7077"

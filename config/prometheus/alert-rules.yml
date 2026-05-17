@@ -1,0 +1,69 @@
+groups:
+  - name: orange-logistics-alerts
+    rules:
+      # 物流事件处理延迟告警
+      - alert: HighKafkaConsumerLag
+        expr: kafka_consumer_lag_sum{topic="logistics-tracking-events"} > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka 消费延迟过高"
+          description: "Topic logistics-tracking-events 消费延迟超过 10000，当前→ {{ $value }}"
+
+      # 异常数量突增
+      - alert: AnomalySpike
+        expr: increase(logistics_anomalies_total[10m]) > 50
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "物流异常数量突增"
+          description: "10分钟内异常数量超→0，当前→ {{ $value }}"
+
+      # 服务不可→      - alert: ServiceDown
+        expr: up{job=~"logistics-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "服务不可→ {{ $labels.instance }}"
+          description: "{{ $labels.job }} 服务已宕机超→分钟"
+
+      # API 响应时间过高
+      - alert: HighApiLatency
+        expr: histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{uri=~"/api/.*"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API P99 响应时间过高"
+          description: "接口 {{ $labels.uri }} P99 延迟超过 2s，当前→ {{ $value }}s"
+
+      # JVM 内存使用过高
+      - alert: HighJvmMemory
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM Heap 使用率过→
+          description: "{{ $labels.instance }} Heap 使用率超→85%"
+
+      # Spark Streaming 批处理延→      - alert: SparkBatchDelay
+        expr: spark_streaming_batch_duration_seconds > 30
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Spark Streaming 批处理时间过→
+          description: "批处理时间超→30s，当前→ {{ $value }}s"
+
+      # Redis 连接数过→      - alert: HighRedisConnections
+        expr: redis_connected_clients > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis 连接数过→
+          description: "Redis 连接数超→500，当前→ {{ $value }}"

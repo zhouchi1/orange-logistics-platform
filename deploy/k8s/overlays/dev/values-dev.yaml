@@ -1,0 +1,22 @@
+# Dev environment overrides
+global:
+  imageTag: "latest"
+  imagePullPolicy: Always
+
+services:
+  gateway:
+    replicas: 1
+  service:
+    replicas: 1
+  transport:
+    replicas: 1
+  dispatch:
+    replicas: 1
+  auth:
+    replicas: 1
+  order:
+    replicas: 1
+  waybill:
+    replicas: 1
+  warehouse:
+    replicas: 1

@@ -1,0 +1,18 @@
+FROM bitnami/spark:3.5
+
+LABEL maintainer="Orange Logistics Platform"
+
+USER root
+
+COPY orange-logistics-streaming/target/orange-logistics-streaming-1.0.0-SNAPSHOT.jar /opt/spark-apps/logistics-streaming.jar
+
+USER 1001
+
+ENTRYPOINT ["/opt/bitnami/spark/bin/spark-submit", \
+    "--master", "spark://spark-master:7077", \
+    "--deploy-mode", "client", \
+    "--driver-memory", "1g", \
+    "--executor-memory", "1g", \
+    "--executor-cores", "2", \
+    "--class", "com.orange.logistics.streaming.job.LogisticsStreamingJob", \
+    "/opt/spark-apps/logistics-streaming.jar"]

@@ -1,0 +1,972 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-gateway
+  namespace: orange-logistics
+  labels:
+    app: logistics-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-gateway
+  template:
+    metadata:
+      labels:
+        app: logistics-gateway
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-gateway
+          image: orange-logistics-platform-logistics-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8888
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-gateway
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8888
+      targetPort: 8888
+  selector:
+    app: logistics-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-service
+  namespace: orange-logistics
+  labels:
+    app: logistics-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-service
+  template:
+    metadata:
+      labels:
+        app: logistics-service
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-service
+          image: orange-logistics-platform-logistics-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-service
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: logistics-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-monitor
+  namespace: orange-logistics
+  labels:
+    app: logistics-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-monitor
+  template:
+    metadata:
+      labels:
+        app: logistics-monitor
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-monitor
+          image: orange-logistics-platform-logistics-monitor:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-monitor
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8081
+      targetPort: 8081
+  selector:
+    app: logistics-monitor
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-transport
+  namespace: orange-logistics
+  labels:
+    app: logistics-transport
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-transport
+  template:
+    metadata:
+      labels:
+        app: logistics-transport
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-transport
+          image: orange-logistics-platform-logistics-transport:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-transport
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8083
+      targetPort: 8083
+  selector:
+    app: logistics-transport
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-dispatch
+  namespace: orange-logistics
+  labels:
+    app: logistics-dispatch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-dispatch
+  template:
+    metadata:
+      labels:
+        app: logistics-dispatch
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-dispatch
+          image: orange-logistics-platform-logistics-dispatch:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8084
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-dispatch
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8084
+      targetPort: 8084
+  selector:
+    app: logistics-dispatch
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-billing
+  namespace: orange-logistics
+  labels:
+    app: logistics-billing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-billing
+  template:
+    metadata:
+      labels:
+        app: logistics-billing
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-billing
+          image: orange-logistics-platform-logistics-billing:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8085
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-billing
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8085
+      targetPort: 8085
+  selector:
+    app: logistics-billing
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-customer
+  namespace: orange-logistics
+  labels:
+    app: logistics-customer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-customer
+  template:
+    metadata:
+      labels:
+        app: logistics-customer
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-customer
+          image: orange-logistics-platform-logistics-customer:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8086
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-customer
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8086
+      targetPort: 8086
+  selector:
+    app: logistics-customer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-notification
+  namespace: orange-logistics
+  labels:
+    app: logistics-notification
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-notification
+  template:
+    metadata:
+      labels:
+        app: logistics-notification
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-notification
+          image: orange-logistics-platform-logistics-notification:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8087
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-notification
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8087
+      targetPort: 8087
+  selector:
+    app: logistics-notification
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-report
+  namespace: orange-logistics
+  labels:
+    app: logistics-report
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-report
+  template:
+    metadata:
+      labels:
+        app: logistics-report
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-report
+          image: orange-logistics-platform-logistics-report:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8088
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-report
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8088
+      targetPort: 8088
+  selector:
+    app: logistics-report
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-risk
+  namespace: orange-logistics
+  labels:
+    app: logistics-risk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-risk
+  template:
+    metadata:
+      labels:
+        app: logistics-risk
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-risk
+          image: orange-logistics-platform-logistics-risk:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8089
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-risk
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8089
+      targetPort: 8089
+  selector:
+    app: logistics-risk
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-scheduler
+  namespace: orange-logistics
+  labels:
+    app: logistics-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-scheduler
+  template:
+    metadata:
+      labels:
+        app: logistics-scheduler
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-scheduler
+          image: orange-logistics-platform-logistics-scheduler:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8090
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-scheduler
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8090
+      targetPort: 8090
+  selector:
+    app: logistics-scheduler
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-search
+  namespace: orange-logistics
+  labels:
+    app: logistics-search
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-search
+  template:
+    metadata:
+      labels:
+        app: logistics-search
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-search
+          image: orange-logistics-platform-logistics-search:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8091
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-search
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8091
+      targetPort: 8091
+  selector:
+    app: logistics-search
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-config
+  namespace: orange-logistics
+  labels:
+    app: logistics-config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-config
+  template:
+    metadata:
+      labels:
+        app: logistics-config
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-config
+          image: orange-logistics-platform-logistics-config:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8092
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-config
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8092
+      targetPort: 8092
+  selector:
+    app: logistics-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-im
+  namespace: orange-logistics
+  labels:
+    app: logistics-im
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-im
+  template:
+    metadata:
+      labels:
+        app: logistics-im
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-im
+          image: orange-logistics-platform-logistics-im:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8093
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-im
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8093
+      targetPort: 8093
+  selector:
+    app: logistics-im
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-auth
+  namespace: orange-logistics
+  labels:
+    app: logistics-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-auth
+  template:
+    metadata:
+      labels:
+        app: logistics-auth
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-auth
+          image: orange-logistics-platform-logistics-auth:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8100
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-auth
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8100
+      targetPort: 8100
+  selector:
+    app: logistics-auth
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-order
+  namespace: orange-logistics
+  labels:
+    app: logistics-order
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-order
+  template:
+    metadata:
+      labels:
+        app: logistics-order
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-order
+          image: orange-logistics-platform-logistics-order:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8101
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-order
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8101
+      targetPort: 8101
+  selector:
+    app: logistics-order
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-waybill
+  namespace: orange-logistics
+  labels:
+    app: logistics-waybill
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-waybill
+  template:
+    metadata:
+      labels:
+        app: logistics-waybill
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-waybill
+          image: orange-logistics-platform-logistics-waybill:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8102
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-waybill
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8102
+      targetPort: 8102
+  selector:
+    app: logistics-waybill
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-warehouse
+  namespace: orange-logistics
+  labels:
+    app: logistics-warehouse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-warehouse
+  template:
+    metadata:
+      labels:
+        app: logistics-warehouse
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: logistics-warehouse
+          image: orange-logistics-platform-logistics-warehouse:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8103
+          envFrom:
+            - configMapRef:
+                name: orange-logistics-config
+          env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orange-logistics-secrets
+                  key: MYSQL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-warehouse
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8103
+      targetPort: 8103
+  selector:
+    app: logistics-warehouse

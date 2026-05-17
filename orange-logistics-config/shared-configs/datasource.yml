@@ -1,0 +1,26 @@
+# 数据源配置- 所有微服务共享
+# 发布到Nacos 配置中心，dataId: datasource.yml, group: DEFAULT_GROUP
+
+spring:
+  r2dbc:
+    url: r2dbc:mysql://${MYSQL_HOST:localhost}:3306/orange_logistics
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:orange_logistics_2024}
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+      validation-query: SELECT 1
+
+  # 传统 JDBC 数据源（供非响应式服务使用）
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/orange_logistics?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:orange_logistics_2024}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000

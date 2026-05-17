@@ -1,0 +1,35 @@
+﻿server:
+  port: 8092
+
+spring:
+  config:
+    import: "optional:nacos:${NACOS_ADDR:localhost:8848}"
+  application:
+    name: orange-logistics-config
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    refresh:
+      enabled: true
+
+---
+# Local dev mode - disable Nacos registration
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+      config:
+        enabled: false

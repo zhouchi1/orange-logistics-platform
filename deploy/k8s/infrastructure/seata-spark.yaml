@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seata
+  namespace: orange-logistics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seata
+  template:
+    metadata:
+      labels:
+        app: seata
+    spec:
+      containers:
+        - name: seata
+          image: seataio/seata-server:2.0.0
+          ports:
+            - containerPort: 8091
+            - containerPort: 7091
+          env:
+            - name: SEATA_PORT
+              value: "8091"
+            - name: STORE_MODE
+              value: "db"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seata
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - name: rpc
+      port: 8091
+      targetPort: 8091
+    - name: http
+      port: 7091
+      targetPort: 7091
+  selector:
+    app: seata
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: orange-logistics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-master
+  template:
+    metadata:
+      labels:
+        app: spark-master
+    spec:
+      containers:
+        - name: spark-master
+          image: apache/spark:3.5.1-java17
+          command: ["/opt/spark/bin/spark-class"]
+          args: ["org.apache.spark.deploy.master.Master"]
+          env:
+            - name: SPARK_NO_DAEMONIZE
+              value: "true"
+            - name: SPARK_MASTER_HOST
+              value: "0.0.0.0"
+            - name: SPARK_MASTER_PORT
+              value: "7077"
+            - name: SPARK_MASTER_WEBUI_PORT
+              value: "8080"
+          ports:
+            - containerPort: 7077
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master
+  namespace: orange-logistics
+spec:
+  type: ClusterIP
+  ports:
+    - name: spark
+      port: 7077
+      targetPort: 7077
+    - name: webui
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: spark-master

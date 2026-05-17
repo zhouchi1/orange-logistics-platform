@@ -1,0 +1,12 @@
+apiVersion: v2
+name: orange-logistics
+description: Orange Logistics Platform Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0-SNAPSHOT"
+keywords:
+  - logistics
+  - microservices
+  - spring-boot
+maintainers:
+  - name: Orange Logistics Team

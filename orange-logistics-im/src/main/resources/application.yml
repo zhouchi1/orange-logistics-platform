@@ -1,0 +1,44 @@
+server:
+  port: 8093
+
+spring:
+  config:
+    import: "optional:nacos:${NACOS_ADDR:localhost:8848}"
+  application:
+    name: orange-logistics-im
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+  r2dbc:
+    url: r2dbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:13306}/orange_logistics?serverTimezone=Asia/Shanghai
+    username: root
+    password: orange_logistics_2024
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    consumer:
+      group-id: im-logistics-listener
+      auto-offset-reset: latest
+    listener:
+      auto-startup: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+---
+# Local dev mode - disable Nacos registration
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+      config:
+        enabled: false

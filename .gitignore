@@ -1,0 +1,57 @@
+# ===== Java =====
+**/target/
+*.class
+*.jar
+*.war
+!**/src/**/target/
+*.log
+
+# ===== Maven =====
+.m2/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# ===== IDE =====
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# ===== Python =====
+**/venv/
+**/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ===== Docker =====
+**/startup-err.log
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Environment =====
+.env
+.env.local
+.env.production
+*.key
+*.pem
+
+# ===== Logs =====
+logs/
+*.log
+
+# ===== K8s temp =====
+deploy/k8s/base/temp.yaml

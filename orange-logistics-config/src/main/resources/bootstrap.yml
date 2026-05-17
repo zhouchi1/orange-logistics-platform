@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: orange-logistics-config
+  cloud:
+    nacos:
+      config:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        file-extension: yml
+        shared-configs:
+          - data-id: common.yml
+            group: DEFAULT_GROUP
+            refresh: true
+          - data-id: datasource.yml
+            group: DEFAULT_GROUP
+            refresh: true
+          - data-id: redis.yml
+            group: DEFAULT_GROUP
+            refresh: true

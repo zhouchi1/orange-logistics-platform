@@ -1,0 +1,39 @@
+server:
+  port: 8091
+
+spring:
+  config:
+    import: "optional:nacos:${NACOS_ADDR:localhost:8848}"
+  application:
+    name: orange-logistics-search
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+  r2dbc:
+    url: r2dbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:13306}/orange_logistics
+    username: root
+    password: orange_logistics_2024
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+  elasticsearch:
+    uris: ${ES_URIS:http://localhost:9200}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+---
+# Local dev mode - disable Nacos registration
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+      config:
+        enabled: false

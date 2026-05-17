@@ -1,0 +1,28 @@
+# Redis 配置 - 所有微服务共享
+# 发布到 Nacos 配置中心，dataId: redis.yml, group: DEFAULT_GROUP
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000ms
+
+# Redis 各服务数据库分配
+# db0: 通用缓存
+# db1: 订单服务
+# db2: 仓储服务
+# db3: 运输服务
+# db4: 通知服务（频率控制）
+# db5: 风控服务（行为计数）
+# db6: 搜索服务（热搜/建议）
+# db7: 调度服务（分布式锁）
+# db8: 报表服务（缓存）

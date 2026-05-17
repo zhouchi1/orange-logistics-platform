@@ -1,0 +1,35 @@
+# Production environment overrides
+global:
+  imagePullPolicy: IfNotPresent
+
+services:
+  gateway:
+    replicas: 3
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "2000m"
+  service:
+    replicas: 3
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "2000m"
+  auth:
+    replicas: 3
+  order:
+    replicas: 3
+  waybill:
+    replicas: 3
+  transport:
+    replicas: 3
+  dispatch:
+    replicas: 3
+  warehouse:
+    replicas: 3

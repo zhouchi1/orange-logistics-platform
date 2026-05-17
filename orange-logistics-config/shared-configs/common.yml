@@ -1,0 +1,34 @@
+# 通用配置 - 所有微服务共享
+# 发布到Nacos 配置中心，dataId: common.yml, group: DEFAULT_GROUP
+
+logging:
+  level:
+    root: INFO
+    com.orange.logistics: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+
+# 通用超时配置
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 10000
+
+# 通用线程池配置thread-pool:
+  core-size: 10
+  max-size: 50
+  queue-capacity: 200
+  keep-alive-seconds: 60
+
+# 通用业务配置
+orange:
+  logistics:
+    # 订单超时时间（小时）
+    order-timeout-hours: 72
+    # 数据保留天数
+    data-retention-days: 90
+    # 分页默认大小
+    default-page-size: 20
+    max-page-size: 100

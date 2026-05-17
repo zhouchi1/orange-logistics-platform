@@ -1,0 +1,129 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: orange-logistics-gateway
+  main:
+    web-application-type: reactive
+  config:
+    import: 
+
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+      config:
+        enabled: false
+
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://localhost:8100
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
+        - id: order-service
+          uri: http://localhost:8101
+          predicates:
+            - Path=/api/order/**
+          filters:
+            - StripPrefix=1
+
+        - id: waybill-service
+          uri: http://localhost:8102
+          predicates:
+            - Path=/api/waybill/**
+          filters:
+            - StripPrefix=1
+
+        - id: transport-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/transport/**
+          filters:
+            - StripPrefix=1
+
+        - id: dispatch-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/dispatch/**
+          filters:
+            - StripPrefix=1
+
+        - id: billing-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/billing/**
+          filters:
+            - StripPrefix=1
+
+        - id: customer-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/customer/**
+          filters:
+            - StripPrefix=1
+
+        - id: ai-prediction-service
+          uri: http://localhost:8001
+          predicates:
+            - Path=/api/ai-prediction/**
+          filters:
+            - StripPrefix=1
+
+        - id: ai-agent-service
+          uri: http://localhost:8002
+          predicates:
+            - Path=/api/ai-agent/**
+          filters:
+            - StripPrefix=1
+
+        - id: config-service
+          uri: http://localhost:8092
+          predicates:
+            - Path=/api/config/**
+          filters:
+            - StripPrefix=1
+
+      default-filters:
+        - AddRequestHeader=X-Gateway-Source, orange-logistics-gateway
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000ms
+
+gateway:
+  jwt:
+    secret: ${JWT_SECRET:orange-logistics-platform-secret-key-2024-must-be-256-bits}
+  dynamic-route:
+    data-id: gateway-routes.json
+    group: DEFAULT_GROUP
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.orange.logistics.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"

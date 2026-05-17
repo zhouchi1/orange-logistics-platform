@@ -1,0 +1,358 @@
+# Global settings
+global:
+  imageRegistry: "harbor.orange-logistics.com"
+  imageTag: "1.0.0-SNAPSHOT"
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: harbor-credentials
+  namespace: orange-logistics
+
+# Common environment for all services
+commonEnv:
+  NACOS_ADDR: "nacos.orange-logistics.svc.cluster.local:8848"
+  NACOS_SERVER_ADDR: "nacos.orange-logistics.svc.cluster.local:8848"
+  REDIS_HOST: "redis.orange-logistics.svc.cluster.local"
+  MYSQL_HOST: "mysql.orange-logistics.svc.cluster.local"
+  MYSQL_PORT: "3306"
+  KAFKA_SERVERS: "kafka.orange-logistics.svc.cluster.local:9092"
+  ES_HOST: "elasticsearch.orange-logistics.svc.cluster.local"
+  SEATA_ADDR: "seata.orange-logistics.svc.cluster.local:8091"
+  ROCKETMQ_NAMESRV: "rocketmq-namesrv.orange-logistics.svc.cluster.local:9876"
+
+# Microservices configuration
+services:
+  gateway:
+    enabled: true
+    name: logistics-gateway
+    image: orange-logistics-gateway
+    port: 8888
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+    ingress:
+      enabled: true
+      host: api.orange-logistics.com
+      path: /
+
+  service:
+    enabled: true
+    name: logistics-service
+    image: orange-logistics-service
+    port: 8080
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+
+  monitor:
+    enabled: true
+    name: logistics-monitor
+    image: orange-logistics-monitor
+    port: 8081
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  transport:
+    enabled: true
+    name: logistics-transport
+    image: orange-logistics-transport
+    port: 8083
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+
+  dispatch:
+    enabled: true
+    name: logistics-dispatch
+    image: orange-logistics-dispatch
+    port: 8084
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+
+  billing:
+    enabled: true
+    name: logistics-billing
+    image: orange-logistics-billing
+    port: 8085
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  customer:
+    enabled: true
+    name: logistics-customer
+    image: orange-logistics-customer
+    port: 8086
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  notification:
+    enabled: true
+    name: logistics-notification
+    image: orange-logistics-notification
+    port: 8087
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  report:
+    enabled: true
+    name: logistics-report
+    image: orange-logistics-report
+    port: 8088
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  risk:
+    enabled: true
+    name: logistics-risk
+    image: orange-logistics-risk
+    port: 8089
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  scheduler:
+    enabled: true
+    name: logistics-scheduler
+    image: orange-logistics-scheduler
+    port: 8090
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  search:
+    enabled: true
+    name: logistics-search
+    image: orange-logistics-search
+    port: 8091
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  config:
+    enabled: true
+    name: logistics-config
+    image: orange-logistics-config
+    port: 8092
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  im:
+    enabled: true
+    name: logistics-im
+    image: orange-logistics-im
+    port: 8093
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  auth:
+    enabled: true
+    name: logistics-auth
+    image: orange-logistics-auth
+    port: 8100
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+
+  order:
+    enabled: true
+    name: logistics-order
+    image: orange-logistics-order
+    port: 8101
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+
+  waybill:
+    enabled: true
+    name: logistics-waybill
+    image: orange-logistics-waybill
+    port: 8102
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+
+  warehouse:
+    enabled: true
+    name: logistics-warehouse
+    image: orange-logistics-warehouse
+    port: 8103
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+
+# AI Services (deployed separately, not through Helm template loop)
+aiServices:
+  prediction:
+    enabled: true
+    name: ai-prediction
+    image: orange-logistics-ai-prediction
+    port: 8001
+    replicas: 2
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    env:
+      PREDICTION_DB_HOST: "mysql.orange-logistics.svc.cluster.local"
+      PREDICTION_DB_PORT: "3306"
+      PREDICTION_DB_NAME: "orange_logistics"
+      REDIS_HOST: "redis.orange-logistics.svc.cluster.local"
+      AI_PREDICTION_URL: "http://ai-prediction.orange-logistics.svc.cluster.local:8001"
+
+  agent:
+    enabled: true
+    name: ai-agent
+    image: orange-logistics-ai-agent
+    port: 8002
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "200m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+    env:
+      MYSQL_HOST: "mysql.orange-logistics.svc.cluster.local"
+      REDIS_HOST: "redis.orange-logistics.svc.cluster.local"
+      AI_PREDICTION_URL: "http://ai-prediction.orange-logistics.svc.cluster.local:8001"
+
+# XXL-JOB Admin
+xxlJob:
+  enabled: true
+  image: xuxueli/xxl-job-admin:2.4.2
+  port: 8080
+  nodePort: 30800
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "768Mi"
+      cpu: "500m"
+  accessToken: "orange-logistics-token-2024"
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.orange-logistics.com
+      paths:
+        - path: /
+          service: logistics-gateway
+          port: 8888
+    - host: admin.orange-logistics.com
+      paths:
+        - path: /xxl-job-admin
+          service: xxl-job-admin
+          port: 8080
+  tls:
+    - secretName: orange-logistics-tls
+      hosts:
+        - api.orange-logistics.com
+        - admin.orange-logistics.com
