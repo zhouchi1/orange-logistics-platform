@@ -1,10 +1,11 @@
-# Lightweight requirements for Docker deployment
-# Heavy packages (sentence-transformers, torch) excluded
+# Lightweight requirements for Docker/CI deployment
 fastapi==0.110.0
 uvicorn==0.29.0
 langchain==0.1.12
 langchain-openai==0.0.8
 langchain-community==0.0.28
+langchain-core>=0.1.30
+langgraph==0.0.26
 pydantic==2.6.0
 pydantic-settings==2.2.0
 redis==5.0.1
