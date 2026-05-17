@@ -90,7 +90,7 @@ jobs:
         run: |
           cd orange-logistics-ai-prediction
           pip install -r requirements-docker.txt -q
-          python -c "from app.config import settings; from app.api.arrival_routes import router; print('✓ ai-prediction OK')"
+          python -c "from app.config import settings; from app.api.arrival_routes import arrival_router; print('✓ ai-prediction OK')"
 
       - name: Validate AI Agent
         run: |
