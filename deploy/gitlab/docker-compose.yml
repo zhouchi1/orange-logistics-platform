@@ -1,0 +1,38 @@
+services:
+  gitea:
+    image: gitea/gitea:1.22
+    container_name: gitea
+    restart: unless-stopped
+    ports:
+      - "3000:3000"    # Web UI
+      - "2222:22"      # SSH
+    volumes:
+      - gitea_data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__server__ROOT_URL=http://localhost:3000
+      - GITEA__server__SSH_PORT=2222
+      - GITEA__actions__ENABLED=true
+      - GITEA__packages__ENABLED=true
+
+  runner:
+    image: gitea/act_runner:latest
+    container_name: gitea-runner
+    restart: unless-stopped
+    volumes:
+      - runner_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - GITEA_INSTANCE_URL=http://gitea:3000
+      - GITEA_RUNNER_REGISTRATION_TOKEN=${RUNNER_TOKEN:-placeholder}
+      - GITEA_RUNNER_NAME=local-runner
+      - GITEA_RUNNER_LABELS=ubuntu-latest:docker://node:20,docker:docker://docker:24-dind
+    depends_on:
+      - gitea
+
+volumes:
+  gitea_data:
+  runner_data:
