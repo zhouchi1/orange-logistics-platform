@@ -1,38 +1,44 @@
 services:
-  gitea:
-    image: gitea/gitea:1.22
-    container_name: gitea
+  gitlab:
+    image: gitlab/gitlab-ce:17.4.0-ce.0
+    container_name: gitlab
+    hostname: gitlab.local
     restart: unless-stopped
+    privileged: true
     ports:
-      - "3000:3000"    # Web UI
-      - "2222:22"      # SSH
+      - "8929:8929"
+      - "8922:22"
+      - "5050:5050"
     volumes:
-      - gitea_data:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
     environment:
-      - USER_UID=1000
-      - USER_GID=1000
-      - GITEA__server__ROOT_URL=http://localhost:3000
-      - GITEA__server__SSH_PORT=2222
-      - GITEA__actions__ENABLED=true
-      - GITEA__packages__ENABLED=true
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 8922
+        puma['worker_processes'] = 2
+        sidekiq['max_concurrency'] = 5
+        prometheus_monitoring['enable'] = false
+        alertmanager['enable'] = false
+        gitlab_kas['enable'] = false
+        registry['enable'] = true
+        registry_external_url 'http://localhost:5050'
+        registry['registry_http_addr'] = "0.0.0.0:5050"
+    shm_size: '256m'
 
-  runner:
-    image: gitea/act_runner:latest
-    container_name: gitea-runner
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
     restart: unless-stopped
     volumes:
-      - runner_data:/data
+      - runner_config:/etc/gitlab-runner
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - GITEA_INSTANCE_URL=http://gitea:3000
-      - GITEA_RUNNER_REGISTRATION_TOKEN=${RUNNER_TOKEN:-placeholder}
-      - GITEA_RUNNER_NAME=local-runner
-      - GITEA_RUNNER_LABELS=ubuntu-latest:docker://node:20,docker:docker://docker:24-dind
     depends_on:
-      - gitea
+      - gitlab
 
 volumes:
-  gitea_data:
-  runner_data:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:
+  runner_config:

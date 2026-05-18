@@ -1,0 +1,252 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubesphere-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubesphere
+  namespace: kubesphere-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubesphere-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: kubesphere
+    namespace: kubesphere-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubesphere-config
+  namespace: kubesphere-system
+data:
+  kubesphere.yaml: |
+    authentication:
+      authenticateRateLimiterMaxTries: 10
+      authenticationRateLimiterDuration: 10m0s
+      loginHistoryRetentionPeriod: 168h
+      enableMultiLogin: true
+      issuer:
+        maximumClockSkew: 10s
+        accessTokenMaxAge: 2h
+        accessTokenInactivityTimeout: 30m
+    multicluster:
+      enable: false
+    portal:
+      hostname: ks-console.kubesphere-system.svc
+      http:
+        port: 30880
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ks-apiserver
+  namespace: kubesphere-system
+  labels:
+    app: ks-apiserver
+    version: v4.1.3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ks-apiserver
+  template:
+    metadata:
+      labels:
+        app: ks-apiserver
+        tier: backend
+    spec:
+      serviceAccountName: kubesphere
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+      containers:
+        - name: ks-apiserver
+          image: kubesphere/ks-apiserver:v4.1.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          command:
+            - ks-apiserver
+            - --logtostderr=true
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1024Mi
+            requests:
+              cpu: 20m
+              memory: 100Mi
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 15
+            failureThreshold: 8
+            timeoutSeconds: 15
+          volumeMounts:
+            - mountPath: /etc/kubesphere/
+              name: kubesphere-config
+      volumes:
+        - name: kubesphere-config
+          configMap:
+            name: kubesphere-config
+            defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ks-apiserver
+  namespace: kubesphere-system
+  labels:
+    app: ks-apiserver
+spec:
+  ports:
+    - port: 80
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app: ks-apiserver
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ks-controller-manager
+  namespace: kubesphere-system
+  labels:
+    app: ks-controller-manager
+    version: v4.1.3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ks-controller-manager
+  template:
+    metadata:
+      labels:
+        app: ks-controller-manager
+    spec:
+      serviceAccountName: kubesphere
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+      containers:
+        - name: ks-controller-manager
+          image: kubesphere/ks-controller-manager:v4.1.3
+          imagePullPolicy: IfNotPresent
+          command:
+            - controller-manager
+            - --logtostderr=true
+            - --leader-elect=true
+          ports:
+            - containerPort: 8443
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1024Mi
+            requests:
+              cpu: 30m
+              memory: 50Mi
+          volumeMounts:
+            - mountPath: /etc/kubesphere/
+              name: kubesphere-config
+      volumes:
+        - name: kubesphere-config
+          configMap:
+            name: kubesphere-config
+            defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ks-controller-manager
+  namespace: kubesphere-system
+  labels:
+    app: ks-controller-manager
+spec:
+  ports:
+    - port: 443
+      targetPort: 8443
+      protocol: TCP
+  selector:
+    app: ks-controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ks-console
+  namespace: kubesphere-system
+  labels:
+    app: ks-console
+    version: v4.1.3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ks-console
+  template:
+    metadata:
+      labels:
+        app: ks-console
+        tier: frontend
+    spec:
+      serviceAccountName: kubesphere
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+      containers:
+        - name: ks-console
+          image: kubesphere/ks-console:v4.1.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+            requests:
+              cpu: 20m
+              memory: 100Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+              scheme: HTTP
+            initialDelaySeconds: 15
+            failureThreshold: 8
+            timeoutSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ks-console
+  namespace: kubesphere-system
+  labels:
+    app: ks-console
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 8000
+      nodePort: 30880
+      protocol: TCP
+  selector:
+    app: ks-console
